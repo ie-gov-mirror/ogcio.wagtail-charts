@@ -98,6 +98,7 @@ class ChartDefinition extends window.wagtailStreamField.blocks.StructBlockDefini
         data: buildData(JSON.parse(dataSetField.value), chartType),
         columns: columns,
         minDimensions:[columns.length + 1, 2],
+        pointStyle: false,
         tableOverflow: true,
         tableWidth: "100%",
         rowDrag: true,

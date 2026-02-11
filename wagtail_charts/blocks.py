@@ -84,6 +84,35 @@ class ChartSettingsBlock(StructBlock):
         group="General",
     )
     unit_override = CharBlock(required=False, label="Unit override", group="General")
+    point_style = ChoiceBlock(
+        choices=(
+            ("none", "None"),
+            ("circle", "Circle"),
+            ("cross", "Cross"),
+            ("crossRot", "CrossRot"),
+            ("dash", "Dash"),
+            ("line", "Line"),
+            ("rect", "Rect"),
+            ("rectRounded", "RectRounded"),
+            ("rectRot", "RectRot"),
+            ("star", "Star"),
+            ("triangle", "Triangle"),
+        ),
+        default="circle",
+        label="Point Style",
+        group="General",
+    )
+    aspect_ratio = ChoiceBlock(
+        choices=(
+            ("none", "Default"),
+            ("0.5", "0.5"),
+            ("1", "1"),
+            ("1.5", "1.5"),
+        ),
+        default="none",
+        label="Chart Aspect Ratio",
+        group="General",
+    )
 
     # Left Axis settings
     y_left_min = CharBlock(required=False, label="Left Y axis minimum value", group="Left_Axis")
@@ -119,7 +148,7 @@ class ChartSettingsBlock(StructBlock):
     pie_border_width = IntegerBlock(default=2, label="Width of pie slice border", group="Pie_Chart")
     pie_border_color = CharBlock(default="#fff", label="Color of pie slice border", group="Pie_Chart")
 
-    class Meta:
+    class Meta:  # type: ignore
         form_template = "wagtailcharts/blocks/settings.html"
         label = "Chart Settings"
         value_class = SettingsStructValue
@@ -148,7 +177,7 @@ class ChartBlock(StructBlock):
 
     settings = ChartSettingsBlock()
 
-    class Meta:
+    class Meta:  # type: ignore
         icon = "fa-chart"
         label = "Chart Block"
         template = "wagtailcharts/blocks/chart_block.html"
@@ -162,6 +191,7 @@ class ChartBlockAdapter(StructBlockAdapter):
 
     def js_args(self, block):
         result = super().js_args(block)
+
         meta = result[2]
         meta["colors"] = block.meta.colors
         meta["multi_chart_types"] = block.meta.multi_chart_types
@@ -173,7 +203,7 @@ class ChartBlockAdapter(StructBlockAdapter):
     def media(self):
         structblock_media = super().media
         return forms.Media(
-            js=structblock_media._js
+            js=structblock_media._js  # type: ignore
             + [
                 "wagtailcharts/js/chart-types.js",
                 "wagtailcharts/js/chart-dataset.js",
@@ -181,7 +211,7 @@ class ChartBlockAdapter(StructBlockAdapter):
                 "wagtailcharts/js/jsuites.js",
             ],
             css={
-                **structblock_media._css,
+                **structblock_media._css,  # type: ignore
                 **{
                     "all": (
                         "wagtailcharts/css/jspreadsheet.css",

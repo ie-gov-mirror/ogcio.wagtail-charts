@@ -148,6 +148,11 @@ for (i = 0; i < charts.length; ++i) {
 
     let options = {
         responsive: true,
+        elements: {
+            point: {
+                pointStyle: 'circle',
+            },
+        },
         scales: {
             x: {
                 display: true,
@@ -202,9 +207,9 @@ for (i = 0; i < charts.length; ++i) {
                             label += ': ';
                         }
                         data = context.dataset.data[context.dataIndex]
-                        if(Array.isArray(data) && data.length == 2){
+                        if (Array.isArray(data) && data.length == 2) {
                             label += formatValue((parseFloat(data[1])*1000-parseFloat(data[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
-                        }else{
+                        } else {
                             label += formatValue(context.dataset.data[context.dataIndex], chart_settings['precision'], chart_settings['unit_override'], chart_settings['unit_override'])
                         }
                         return label;
@@ -213,9 +218,9 @@ for (i = 0; i < charts.length; ++i) {
             },
             datalabels: {
                 formatter: function(value) {
-                    if(Array.isArray(value) && value.length == 2){
+                    if (Array.isArray(value) && value.length == 2) {
                         return formatValue((parseFloat(value[1])*1000-parseFloat(value[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
-                    }else{
+                    } else {
                         return formatValue(value, chart_settings['precision'], chart_settings['unit_override'])
                     }
                 },
@@ -223,12 +228,22 @@ for (i = 0; i < charts.length; ++i) {
         },
     }
 
+    if (chart_settings['aspect_ratio'] !== 'none') {
+        options.aspectRatio = Number(chart_settings['aspect_ratio']);
+    }
+
     if (chart_settings['html_legend']) {
-        charts[i].insertAdjacentHTML('afterend', '<div id="'+charts[i].id.replace('chart', 'chart-legend-container')+'"></div>');
+        charts[i].insertAdjacentHTML('afterend', '<div id="' + charts[i].id.replace('chart', 'chart-legend-container') + '"></div>');
         options.plugins.legend.display = false;
         options.plugins.htmlLegend = {
             containerID: charts[i].id.replace('chart', 'chart-legend-container'),
         }
+    }
+
+    if (chart_settings['point_style'] === 'none') {
+        options.elements.point.pointStyle = false;
+    } else if (chart_settings['point_style'] !== '') {
+        options.elements.point.pointStyle = chart_settings['point_style'];
     }
 
     if (chart_settings['y_left_min'] !== '') {
@@ -255,9 +270,9 @@ for (i = 0; i < charts.length; ++i) {
                 label += ': ';
             }
             data = context.dataset.data[context.dataIndex]
-            if(Array.isArray(data) && data.length == 2){
+            if (Array.isArray(data) && data.length == 2) {
                 label += percentageFormatter((parseFloat(data[1])*1000-parseFloat(data[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
-            }else{
+            } else {
                 label += percentageFormatter(context.dataset.data[context.dataIndex], chart_settings['precision'], chart_settings['unit_override'])
             }
             return label;
