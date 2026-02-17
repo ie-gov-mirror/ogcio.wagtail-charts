@@ -69,10 +69,10 @@ class ChartSettingsBlock(StructBlock):
         group="General",
     )
     reverse_legend = BooleanBlock(default=False, required=False, label="Reverse legend", group="General")
+    unit_override = CharBlock(required=False, label="Unit override", group="General")
     show_values_on_chart = BooleanBlock(default=False, required=False, label="Show values on chart", group="General")
     precision = IntegerBlock(default=1, label="Precision in labels/tooltips", group="General")
     show_grid = BooleanBlock(default=True, required=False, label="Show Chart Grid", group="General")
-    x_label = CharBlock(required=False, label="X axis label", group="General")
     stacking = ChoiceBlock(
         choices=(
             ("none", "No stacking"),
@@ -83,7 +83,6 @@ class ChartSettingsBlock(StructBlock):
         label="Stacking",
         group="General",
     )
-    unit_override = CharBlock(required=False, label="Unit override", group="General")
     point_style = ChoiceBlock(
         choices=(
             ("none", "None"),
@@ -113,6 +112,9 @@ class ChartSettingsBlock(StructBlock):
         label="Chart Aspect Ratio",
         group="General",
     )
+    column_as_dataset = BooleanBlock(default=False, required=False, label="Column as Dataset", group="General")
+    x_label = CharBlock(required=False, label="X axis label", group="General")
+    chart_title = CharBlock(required=False, label="Chart title", group="General")
 
     # Left Axis settings
     y_left_min = CharBlock(required=False, label="Left Y axis minimum value", group="Left_Axis")
@@ -120,7 +122,7 @@ class ChartSettingsBlock(StructBlock):
     y_left_step_size = CharBlock(required=False, label="Left Y axis step size", group="Left_Axis")
     y_left_label = CharBlock(required=False, label="Left Y axis label", group="Left_Axis")
     y_left_data_type = ChoiceBlock(
-        choices=(("number", "Numerical"), ("percentage", "Percentage")),
+        choices=(("number", "Numerical"), ("percentage", "Percentage"), ("absolute_number", "Absolute Number")),
         default="number",
         label="Left Y axis data type",
         required=False,
@@ -135,7 +137,7 @@ class ChartSettingsBlock(StructBlock):
     y_right_step_size = CharBlock(required=False, label="Right Y axis step size", group="Right_Axis")
     y_right_label = CharBlock(required=False, label="Right Y axis label", group="Right_Axis")
     y_right_data_type = ChoiceBlock(
-        choices=(("number", "Numerical"), ("percentage", "Percentage")),
+        choices=(("number", "Numerical"), ("percentage", "Percentage"), ("absolute_number", "Absolute Number")),
         default="number",
         label="Right Y axis data type",
         required=False,
@@ -157,7 +159,9 @@ class ChartSettingsBlock(StructBlock):
 class ChartBlock(StructBlock):
 
     def __init__(self, chart_types=CHART_TYPES, **kwargs):
+
         super().__init__(**kwargs)
+
         self.chart_types = chart_types
         chart_type_block = ChoiceBlock(
             choices=chart_types, label="Chart Type", required=True, default=chart_types[0][0]
@@ -165,6 +169,8 @@ class ChartBlock(StructBlock):
         chart_type_block.set_name("chart_type")
         self.child_blocks["chart_type"] = chart_type_block
         self.child_blocks.move_to_end("chart_type", last=False)
+
+        # Not yet tested, keeping it in case we need custom callbacks in the future or Wagtail inject it in some cases
         if "callbacks" in kwargs:
             callbacks_block = ChoiceBlock(
                 choices=kwargs.get("callbacks"), label="Chart Config Callbacks", required=False

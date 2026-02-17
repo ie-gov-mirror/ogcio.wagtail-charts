@@ -97,14 +97,14 @@ function title_labels(data, options){
     return options.title.slice(1);
 }
 
-function parse_datalabels_value(context){
+function parse_datalabels_value(context) {
     if (context.dataIndex === 0 || context.dataIndex === context.dataset.data.length -1) {
-        value = (parseFloat(context.dataset.data[context.dataIndex])*1000)/1000
-    }else{
+        value = (parseFloat(context.dataset.data[context.dataIndex]) * 1000) / 1000
+    } else {
         data = context.dataset.data[context.dataIndex]
-        if(Array.isArray(data) && data.length == 2){
-            value = (parseFloat(data[1])*1000-parseFloat(data[0])*1000)/1000
-        }else{
+        if (Array.isArray(data) && data.length == 2) {
+            value = (parseFloat(data[1])*1000-parseFloat(data[0]) * 1000) / 1000
+        } else {
             value = data
         }
     }

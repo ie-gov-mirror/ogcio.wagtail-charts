@@ -9,10 +9,12 @@
         <i class="icon icon-fa-cog" aria-hidden="true"></i> {{ group.grouper|addspace }} Options
     </button>
 {% endfor %}
+<hr />
 {% for group in children_groups %}
     <div id="settings-{{ group.grouper }}"
          class="{{ classname }} collapsible collapsed c-sf-container">
         <div class="collapsible-target" style="display:none;">
+            <h3>{{ group.grouper|addspace }} Options</h3>
             {% for child in group.list %}
                 <div class="field {% if child.block.required %}required{% endif %}"
                      data-contentpath="{{ child.block.name }}">
@@ -25,6 +27,7 @@
                     {{ child.render_form }}
                 </div>
             {% endfor %}
+            <hr />
         </div>
     </div>
 {% endfor %}

@@ -137,8 +137,21 @@ for (i = 0; i < charts.length; ++i) {
     const chartType = charts[i].dataset.chartType;
     const configCallback = charts[i].dataset.callback || null;
     const chartObj = chart_types[chartType];
-    let datasets = chartObj.render_datasets(chart_data, chart_options);
-    const labels = chartObj.render_labels(chart_data, chart_options);
+
+    let datasets = [];
+    let labels = [];
+
+    if (chart_settings['column_as_dataset']) {
+        for (let [index, row_title] of chart_options.title.entries()) {
+            if (index !== 0) {
+                datasets.push({ label: row_title, data: chart_data[index], backgroundColor: chart_options.color[index] })
+            }
+        }
+        labels = chart_data[0];
+    } else {
+        datasets = chartObj.render_datasets(chart_data, chart_options);
+        labels = chartObj.render_labels(chart_data, chart_options);
+    }
 
     // Check if we need a right axis
     let rightAxisEnabled = false;
@@ -228,10 +241,11 @@ for (i = 0; i < charts.length; ++i) {
         },
     }
 
+    // General settings
+
     if (chart_settings['aspect_ratio'] !== 'none') {
         options.aspectRatio = Number(chart_settings['aspect_ratio']);
     }
-
     if (chart_settings['html_legend']) {
         charts[i].insertAdjacentHTML('afterend', '<div id="' + charts[i].id.replace('chart', 'chart-legend-container') + '"></div>');
         options.plugins.legend.display = false;
@@ -239,12 +253,16 @@ for (i = 0; i < charts.length; ++i) {
             containerID: charts[i].id.replace('chart', 'chart-legend-container'),
         }
     }
-
     if (chart_settings['point_style'] === 'none') {
         options.elements.point.pointStyle = false;
     } else if (chart_settings['point_style'] !== '') {
         options.elements.point.pointStyle = chart_settings['point_style'];
     }
+    if (chart_settings['chart_title'] !== '') {
+        options.plugins['title'] = { display: true, text: chart_settings['chart_title'], fullSize: false, font: { size: 16 } }
+    }
+
+    // Y settings
 
     if (chart_settings['y_left_min'] !== '') {
         options.scales.y.min = parseFloat(chart_settings['y_left_min'])
@@ -260,7 +278,7 @@ for (i = 0; i < charts.length; ++i) {
         options.scales.y.title.text = chart_settings['y_left_label'];
     }
     if (chart_settings['y_left_data_type'] === "percentage") {
-        options.scales.y.ticks.callback=function(value) {
+        options.scales.y.ticks.callback = function(value) {
             return percentageFormatter(value, chart_settings['y_left_precision'], chart_settings['unit_override'])
         };
         options.plugins.tooltip.callbacks.label = function(context) {
@@ -277,12 +295,27 @@ for (i = 0; i < charts.length; ++i) {
             }
             return label;
         }
-        if (chart_settings['show_values_on_chart']){
+        if (chart_settings['show_values_on_chart']) {
             options.plugins.datalabels.formatter = function(value) {
                 return percentageFormatter(value, chart_settings['precision'], chart_settings['unit_override'])
             }
         }
+    } else if (chart_settings['y_left_data_type'] === "absolute_number") {
+        options.scales.y.ticks.callback = function(value) {
+            let unit = chart_settings['unit_override'] || '';
+            return unit + Math.abs(value).toLocaleString();
+        };
+        options.plugins.tooltip.callbacks.label = function(context) {
+            let label = context.label || '';
+            let unit = chart_settings['unit_override'] || '';
+
+            if (label) {
+                label += ': ';
+            }
+            return label += unit + Math.abs(context.dataset.data[context.dataIndex]).toLocaleString();
+        }
     }
+
 
     if (chart_settings['y_left_show'] === false){
         options.scales.y.grid.lineWidth = function(context){ return context.tick && context.tick.value == 0 ? 1 : 0 }
@@ -340,6 +373,7 @@ for (i = 0; i < charts.length; ++i) {
     if (chart_settings['stacking'] === 'stacked') {
         options.scales.x.stacked = true
         options.scales.y.stacked = true
+        options.scales.y1.stacked = true
     }
 
     if (chart_settings['stacking'] === 'stacked_100') {
@@ -374,12 +408,12 @@ for (i = 0; i < charts.length; ++i) {
         chartOptions.plugins = [...chartOptions.plugins, ChartDataLabels]
         if (chart_settings['stacking'] === 'stacked' || chart_settings['stacking'] === 'stacked_100') {
             options.plugins.datalabels.formatter = function (value) {
-                if(parseFloat(value) === 0.0){
+                if (parseFloat(value) === 0.0) {
                     return ''
                 }
                 if (chart_settings['y_left_data_type'] === "percentage") {
                     return percentageFormatter(value, chart_settings['precision'], chart_settings['unit_override'])
-                }else{
+                } else {
                     return formatValue(value, chart_settings['precision'], chart_settings['unit_override'])
                 }
             }
