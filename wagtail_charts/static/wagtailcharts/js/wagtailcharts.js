@@ -250,6 +250,17 @@ for (i = 0; i < charts.length; ++i) {
                 },
                 title: {
                     display: false
+                },
+                ticks: {
+                    callback: function(value, index, ticks) {
+                        console.log(value)
+                        let labelStep = parseInt(chart_settings['x_tick_label_step']) || 1
+                        if (labelStep !== 1) {
+                            return index % labelStep === 0 ? this.getLabelForValue(value) : '';
+                        } else {
+                            return this.getLabelForValue(value);
+                        }
+                    }
                 }
             },
             y: {
