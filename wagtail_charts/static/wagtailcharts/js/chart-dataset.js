@@ -71,6 +71,14 @@ class ChartDefinition extends window.wagtailStreamField.blocks.StructBlockDefini
       yaxis: {
         type: 'dropdown', title:'Y axis', width:100, source: [{'id': 'left', 'name': 'Left'}, {'id': 'right', 'name': 'Right'}]
       },
+      point_radius: {
+        type: 'dropdown', title:'Point Radius', width:100, source: [
+            {'id': 'default', 'name': 'Default'},
+            {'id': '1', 'name': 'Tiny'},
+            {'id': '6', 'name': 'Medium'},
+            {'id': '12', 'name': 'Large'}
+        ]
+      },
     }
 
     function buildOptionColumns(chartType) {

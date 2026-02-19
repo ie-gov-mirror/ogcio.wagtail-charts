@@ -3,17 +3,26 @@ Chart.defaults.set('plugins.datalabels', {
 });
 
 var formatValue = function (val, precision = 1, override) {
-    if (("" + val).indexOf("%") >= 0) {
-        return val;
+
+    let raw_value;
+
+    if (val instanceof Object && 'y' in val) {
+        raw_value = val.y;
+    } else {
+        raw_value = val;
+    }
+
+    if (("" + raw_value).indexOf("%") >= 0) {
+        return raw_value;
     }
 
     // We look for the locale in the window object, which must be set before the `render_charts` template tag is called.
     // If it is not present, it will be undefined and the browser's default locale will be used.
     let locale = window.WAGTAILCHARTS_LOCALE;
 
-    number = Intl.NumberFormat(locale, {maximumFractionDigits: precision}).format(val)
+    number = Intl.NumberFormat(locale, {maximumFractionDigits: precision}).format(raw_value)
 
-    if(override !== undefined && override !== "" && override !== null){
+    if (override !== undefined && override !== "" && override !== null) {
         return number + " " + override;
     } else {
         return number;
@@ -22,7 +31,7 @@ var formatValue = function (val, precision = 1, override) {
 
 var percentageFormatter = function (val, precision = 1, override) {
     number = formatValue(val, precision)
-    if(override !== undefined && override !== "" && override !== null){
+    if (override !== undefined && override !== "" && override !== null) {
         return number + " " + override;
     } else {
         return number + "%";
@@ -129,6 +138,36 @@ const htmlLegendPlugin = {
     }
 };
 
+const scatterConnectorPlugin = {
+    id: 'connectors',
+    afterDatasetsDraw(chart, args, options) {
+        const ctx = chart.ctx;
+        const x = chart.scales.x;
+        const y = chart.scales.y;
+
+        // The connector only cares about the 3 first datasets
+        const first = chart.data.datasets[0].data;
+        const second = chart.data.datasets[1].data;
+        const backgroundColor = chart.data.datasets[2].backgroundColor;
+        const firstPointRadius = chart.data.datasets[0].pointRadius || 3;
+        const secondPointRadius = chart.data.datasets[1].pointRadius || 3;
+
+        first.forEach((p, i) => {
+            const xPix = x.getPixelForValue(p.x);
+
+            ctx.save();
+            ctx.strokeStyle = backgroundColor;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(xPix, y.getPixelForValue(first[i].y) + firstPointRadius);
+            ctx.lineTo(xPix, y.getPixelForValue(second[i].y) - secondPointRadius);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
+};
+
 var charts = document.querySelectorAll('*[id^="chart-"]');
 for (i = 0; i < charts.length; ++i) {
     const chart_data = JSON.parse(charts[i].dataset.datasets).data;
@@ -140,6 +179,7 @@ for (i = 0; i < charts.length; ++i) {
 
     let datasets = [];
     let labels = [];
+    let annotations = [];
 
     if (chart_settings['column_as_dataset']) {
         for (let [index, row_title] of chart_options.title.entries()) {
@@ -148,6 +188,42 @@ for (i = 0; i < charts.length; ++i) {
             }
         }
         labels = chart_data[0];
+    } else if (chartType === 'scatter') {
+        labels = chart_data[0];
+        for (let [index, row_title] of chart_options.title.entries()) {
+            let xy_data = [];
+            if (index !== 0) {
+                for (let [label_index, label] of labels.entries()) {
+                    xy_data.push({ x: label, y: chart_data[index][label_index] });
+                }
+                let dataset = { label: row_title, data: xy_data, backgroundColor: chart_options.color[index] }
+                let pointRadius = chart_options.point_radius[index];
+                if (!Number.isNaN(parseInt(pointRadius))) {
+                    dataset['pointRadius'] = parseInt(pointRadius);
+                }
+                datasets.push(dataset);
+            }
+        }
+
+        if (chart_settings['chart_markers'].length > 0) {
+            for (let [index, marker] of chart_settings['chart_markers'].entries()) {
+                annotations.push({
+                    type: 'line',
+                    borderColor: marker.value.colour,
+                    borderWidth: 3,
+                    borderDash: [6, 4],
+                    label: {
+                        backgroundColor: marker.value.colour,
+                        content: marker.value.label,
+                        display: true,
+                        position: 'start',
+                        yAdjust: parseInt(chart_settings['chart_marker_label_position']) || 0
+                    },
+                    scaleID: 'y',
+                    value: parseFloat(marker.value.value)
+                })
+            }
+        }
     } else {
         datasets = chartObj.render_datasets(chart_data, chart_options);
         labels = chartObj.render_labels(chart_data, chart_options);
@@ -219,11 +295,23 @@ for (i = 0; i < charts.length; ++i) {
                         if (label) {
                             label += ': ';
                         }
+
                         data = context.dataset.data[context.dataIndex]
+
                         if (Array.isArray(data) && data.length == 2) {
-                            label += formatValue((parseFloat(data[1])*1000-parseFloat(data[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
+                            label += formatValue(
+                                (
+                                    parseFloat(data[1]) * 1000 - parseFloat(data[0]) * 1000) / 1000,
+                                    chart_settings['precision'],
+                                    chart_settings['unit_override']
+                                )
                         } else {
-                            label += formatValue(context.dataset.data[context.dataIndex], chart_settings['precision'], chart_settings['unit_override'], chart_settings['unit_override'])
+                            label += formatValue(
+                                context.dataset.data[context.dataIndex],
+                                chart_settings['precision'],
+                                chart_settings['unit_override'],
+                                chart_settings['unit_override']
+                            )
                         }
                         return label;
                     }
@@ -232,11 +320,19 @@ for (i = 0; i < charts.length; ++i) {
             datalabels: {
                 formatter: function(value) {
                     if (Array.isArray(value) && value.length == 2) {
-                        return formatValue((parseFloat(value[1])*1000-parseFloat(value[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
+                        return formatValue(
+                            (
+                                parseFloat(value[1]) * 1000 - parseFloat(value[0]) * 1000) / 1000,
+                                chart_settings['precision'],
+                                chart_settings['unit_override']
+                            )
                     } else {
                         return formatValue(value, chart_settings['precision'], chart_settings['unit_override'])
                     }
                 },
+            },
+            annotation: {
+                annotations: []
             }
         },
     }
@@ -420,10 +516,18 @@ for (i = 0; i < charts.length; ++i) {
         }
     }
 
-    if (chartType == 'bar_horizontal'){
+    if (chartType == 'bar_horizontal') {
         b = options.scales.y;
         options.scales.y = options.scales.x;
         options.scales.x = b;
+    } else if (chartType == 'scatter') {
+        options.scales.x['type'] = 'category';
+        if (chart_settings['scatter_enable_connector']) {
+            chartOptions.plugins = [...chartOptions.plugins, scatterConnectorPlugin];
+        }
+        if (annotations.length > 0) {
+            options.plugins.annotation.annotations = annotations;
+        }
     }
 
     chartOptions.options = mergeDeep(options, chart_types[chartType].chart_options)

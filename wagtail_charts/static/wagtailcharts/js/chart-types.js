@@ -1,6 +1,6 @@
-function simpleDataSet(data_array, options){
+function simpleDataSet(data_array, options) {
     let datasets = [];
-    for (j=1; j < data_array.length; j++){
+    for (j=1; j < data_array.length; j++) {
         let dataset = {
             label: options.title[j],
             data: data_array[j],
@@ -19,13 +19,13 @@ function simpleDataSet(data_array, options){
     return datasets
 }
 
-function pieDataSet(data, options){
+function pieDataSet(data, options) {
     let datasets = [];
     let labels = []
     let colors = []
     let _datasets = []
 
-    for (j=1; j < data.length; j++){
+    for (j=1; j < data.length; j++) {
         const ds = data[j];
         labels.push(options.title[j])
         colors.push(options.color[j])
@@ -64,19 +64,19 @@ function multiDataSet(data, options) {
 }
 
 
-function waterfallDataSet(data, options){
+function waterfallDataSet(data, options) {
     let datasets = [];
     let labels = []
     let colors = []
     let _datasets = []
 
-    for (j=1; j < data.length; j++){
+    for (j=1; j < data.length; j++) {
         const ds = data[j];
         labels.push(options.title[j])
         colors.push(options.color[j])
-        if(j === 1 || j === data.length-1){
+        if (j === 1 || j === data.length - 1) {
             _datasets.push(data[j][0])
-        }else{
+        } else {
             _datasets.push([data[j-1][0], data[j][0]])
         }
     }
@@ -89,11 +89,11 @@ function waterfallDataSet(data, options){
     return datasets
 }
 
-function first_row_labels(data, options){
+function first_row_labels(data, options) {
     return data[0]
 }
 
-function title_labels(data, options){
+function title_labels(data, options) {
     return options.title.slice(1);
 }
 
@@ -114,7 +114,7 @@ function parse_datalabels_value(context) {
 chart_types = {
     line: {
         title: 'Line Chart',
-        chartjs_chart_type:'line',
+        chartjs_chart_type: 'line',
         dataset_options: ['yaxis'],
         chart_options: {
             plugins:{
@@ -130,7 +130,7 @@ chart_types = {
     },
     bar: {
         title: 'Bar Chart',
-        chartjs_chart_type:'bar',
+        chartjs_chart_type: 'bar',
         dataset_options: ['yaxis'],
         chart_options: {
             plugins:{
@@ -152,7 +152,7 @@ chart_types = {
     },
     bar_horizontal: {
         title: 'Horizontal Bar Chart',
-        chartjs_chart_type:'bar',
+        chartjs_chart_type: 'bar',
         dataset_options: [],
         chart_options: {
             indexAxis: 'y',
@@ -175,7 +175,7 @@ chart_types = {
     },
     area: {
         title: 'Area Chart',
-        chartjs_chart_type:'line',
+        chartjs_chart_type: 'line',
         dataset_options: [],
         chart_options: {},
         render_datasets: areaDataSet,
@@ -183,7 +183,7 @@ chart_types = {
     },
     multi: {
         title: 'Combo Line/Bar/Area Chart',
-        chartjs_chart_type:'bar',
+        chartjs_chart_type: 'bar',
         dataset_options: ['type', 'yaxis'],
         chart_options: {},
         render_datasets: multiDataSet,
@@ -191,7 +191,7 @@ chart_types = {
     },
     pie: {
         title: 'Pie Chart',
-        chartjs_chart_type:'pie',
+        chartjs_chart_type: 'pie',
         dataset_options: [],
         chart_options: {
             scales: undefined
@@ -201,7 +201,7 @@ chart_types = {
     },
     doughnut: {
         title: 'Doughnut Chart',
-        chartjs_chart_type:'doughnut',
+        chartjs_chart_type: 'doughnut',
         dataset_options: [],
         chart_options: {
             scales: undefined
@@ -211,7 +211,7 @@ chart_types = {
     },
     radar: {
         title: 'Radar Chart',
-        chartjs_chart_type:'radar',
+        chartjs_chart_type: 'radar',
         dataset_options: [],
         chart_options: {
             scales: undefined
@@ -221,7 +221,7 @@ chart_types = {
     },
     polar: {
         title: 'Polar Chart',
-        chartjs_chart_type:'polarArea',
+        chartjs_chart_type: 'polarArea',
         dataset_options: [],
         chart_options: {
             scales: undefined
@@ -254,14 +254,15 @@ chart_types = {
         },
         render_datasets: waterfallDataSet,
         render_labels: title_labels,
+    },
+    scatter: {
+        title: 'Scatter Chart',
+        chartjs_chart_type: 'scatter',
+        dataset_options: ['point_radius'],
+        chart_options: {},
+        render_datasets: simpleDataSet,
+        render_labels: first_row_labels,
     }
-    // scatter: {
-    //     title: 'Scatter Chart',
-    //     chartjs_chart_type:'scatter',
-    //     dataset_options: [],
-    //     chart_options: {},
-    //     render_datasets: simpleDataSet,
-    // },
     // bubble: {
     //     title: 'Bubble Chart',
     //     chartjs_chart_type:'bubble',

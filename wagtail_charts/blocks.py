@@ -8,11 +8,13 @@ from wagtail.blocks import (
     CharBlock,
     ChoiceBlock,
     IntegerBlock,
+    StreamBlock,
     StructBlock,
     StructValue,
     TextBlock,
 )
 from wagtail.blocks.struct_block import StructBlockAdapter
+from wagtail_color_panel.blocks import NativeColorBlock
 
 CHART_TYPES = (
     ("line", "Line Chart"),
@@ -26,7 +28,7 @@ CHART_TYPES = (
     ("polar", "Polar Chart"),
     ("waterfall", "Waterfall Chart"),
     # not fully implemented yet
-    # ("scatter", "Scatter Chart"),
+    ("scatter", "Scatter Chart"),
     # ("bubble", "Bubble Chart"),
 )
 
@@ -50,7 +52,23 @@ class SettingsStructValue(StructValue):
 
     @property
     def config(self):
-        return json.dumps(dict(self))
+        self_as_dict = dict(self)
+        # force chart_markers StreamValue field to dict
+        raw_chart_markers = self_as_dict["chart_markers"].raw_data
+        self_as_dict["chart_markers"] = list(raw_chart_markers)
+
+        return json.dumps(self_as_dict)
+
+
+class ChartMarkerBlock(StructBlock):
+
+    colour = NativeColorBlock(default="#169B62")
+    label = CharBlock(required=False)
+    value = CharBlock(required=False)
+
+    class Meta:  # type: ignore
+        icon = "site"
+        label = "Marker Entry"
 
 
 class ChartSettingsBlock(StructBlock):
@@ -149,6 +167,20 @@ class ChartSettingsBlock(StructBlock):
     # Pie/Doughnut Chart settings
     pie_border_width = IntegerBlock(default=2, label="Width of pie slice border", group="Pie_Chart")
     pie_border_color = CharBlock(default="#fff", label="Color of pie slice border", group="Pie_Chart")
+
+    # Scatter Chart settings
+    scatter_enable_connector = BooleanBlock(
+        default=False, required=False, label="Enable Connector", group="Scatter_Chart"
+    )
+    chart_marker_label_position = ChoiceBlock(
+        choices=(("-20", "Top"), ("0", "Center"), ("20", "Bottom")),
+        default="0",
+        label="Marker Label Aligment",
+        group="Scatter_Chart",
+    )
+    chart_markers = StreamBlock(
+        [("marker", ChartMarkerBlock())], required=False, label="Chart Markers", group="Scatter_Chart"
+    )
 
     class Meta:  # type: ignore
         form_template = "wagtailcharts/blocks/settings.html"
