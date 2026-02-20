@@ -168,6 +168,144 @@ const scatterConnectorPlugin = {
     }
 };
 
+const navigatorPlugin = {
+    id: 'navigator',
+    defaults: {
+        handlerH: 30,
+        handlerW: 10,
+        isDragging: false,
+        isHold: false,
+        holdTimer: false,
+        leftHandler: false,
+        rightHandler: false,
+        xLeft: undefined,
+        xRight: undefined,
+        minDistance: 30
+    },
+    afterDatasetsDraw(chart, args, options) {
+        const { ctx, canvas, scales: { x }, chartArea: { left, right, width, height, top, bottom } } = chart;
+
+        if (options.xLeft === undefined) { options.xLeft = left }
+        if (options.xRight === undefined) { options.xRight = right }
+
+        // selected area background
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(211, 211, 211, 0.4)';
+        ctx.rect(options.xLeft, top, options.xRight - options.xLeft, height);
+        ctx.fill();
+        ctx.restore();
+
+        // left handler
+        function handler(x) {
+            const handlerY = height / 2 + top - (options.handlerH / 2);
+            const middlePos = x - options.handlerW / 2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(211, 211, 211, 1)';
+            ctx.fillStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.rect(middlePos, handlerY, options.handlerW, options.handlerH);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(211, 211, 211, 1)';
+            ctx.lineWidth = 2;
+            ctx.moveTo(x, handlerY + 5);
+            ctx.lineTo(x, handlerY + options.handlerH - 5);
+            ctx.stroke();
+        }
+
+        handler(options.xLeft);  // left handler
+        handler(options.xRight);  // right handler
+
+    },
+    beforeEvent(chart, args, options) {
+        const { ctx, parentChart, canvas, scales: { x }, chartArea: { left, right, width, height, top, bottom } } = chart;
+
+        const holdDuration = 500; // ms
+        const handlerHalfW = options.handlerW / 2;
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (options.isDragging) {
+                canvas.style.cursor = 'pointer';
+            } else {
+                // check if the mouse is over a handler
+                if (e.offsetX >= options.xLeft - handlerHalfW && e.offsetX <= options.xLeft + handlerHalfW) {
+                    canvas.style.cursor = 'pointer';
+                } else if (e.offsetX >= options.xRight - handlerHalfW && e.offsetX <= options.xRight + handlerHalfW) {
+                    canvas.style.cursor = 'pointer';
+                } else {
+                    canvas.style.cursor = 'default';
+                }
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.offsetX >= options.xLeft - handlerHalfW && e.offsetX <= options.xLeft + handlerHalfW) {
+                options.isDragging = true;
+                options.leftHandler = true;
+                options.isHold = false;
+                options.holdTimer = setTimeout(() => {
+                    options.isHold = true;
+                }, holdDuration);
+            } else {
+                options.leftHandler = false;
+                canvas.style.cursor = 'default';
+            }
+        });
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.offsetX >= options.xRight - handlerHalfW && e.offsetX <= options.xRight + handlerHalfW) {
+                options.isDragging = true;
+                options.rightHandler = true;
+                options.isHold = false;
+                options.holdTimer = setTimeout(() => {
+                    options.isHold = true;
+                }, holdDuration);
+            } else {
+                options.rightHandler = false;
+                canvas.style.cursor = 'default';
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            clearTimeout(options.holdTimer);
+            if (options.isDragging && !options.isHold) {
+                canvas.style.cursor = 'default';
+            }
+            options.isDragging = false;
+            options.leftHandler = false;
+        });
+        canvas.addEventListener('mouseup', (e) => {
+            clearTimeout(options.holdTimer);
+            if (options.isDragging && !options.isHold) {
+                canvas.style.cursor = 'default';
+            }
+            options.isDragging = false;
+            options.rightHandler = false;
+        });
+
+        // move the handler
+        if (options.isDragging == true && options.leftHandler == true && args.event.type === 'mousemove' &&
+            args.event.x > left && args.event.x < options.xRight - options.minDistance
+        ) {
+            options.xLeft = args.event.x;
+            args.changed = true;
+            parentChart.chartZoom(x.getValueForPixel(options.xLeft), x.getValueForPixel(options.xRight));
+        }
+        if (options.isDragging == true && options.rightHandler == true && args.event.type === 'mousemove' &&
+            args.event.x < right && args.event.x > options.xLeft + options.minDistance
+        ) {
+            options.xRight = args.event.x;
+            args.changed = true;
+            parentChart.chartZoom(x.getValueForPixel(options.xLeft), x.getValueForPixel(options.xRight));
+        }
+    }
+}
+
 var charts = document.querySelectorAll('*[id^="chart-"]');
 for (i = 0; i < charts.length; ++i) {
     const chart_data = JSON.parse(charts[i].dataset.datasets).data;
@@ -253,7 +391,6 @@ for (i = 0; i < charts.length; ++i) {
                 },
                 ticks: {
                     callback: function(value, index, ticks) {
-                        console.log(value)
                         let labelStep = parseInt(chart_settings['x_tick_label_step']) || 1
                         if (labelStep !== 1) {
                             return index % labelStep === 0 ? this.getLabelForValue(value) : '';
@@ -549,4 +686,25 @@ for (i = 0; i < charts.length; ++i) {
     }
 
     let myChart = new Chart(charts[i].getContext('2d'), chartOptions);
+
+    const navChartCanvas = document.getElementById('nav-' + charts[i].id)
+
+    if (navChartCanvas) {
+        myChart.chartZoom = function(min, max) {
+            this.config.options.scales.x.min = min;
+            this.config.options.scales.x.max = max;
+            this.update();
+        }
+        navChartOptions = JSON.parse(JSON.stringify(chartOptions));
+        navChartOptions.options.aspectRatio = 9;
+        navChartOptions.options.scales.x.ticks.display = false;
+        navChartOptions.options.scales.y.title.text = '';
+        navChartOptions.options.scales.y1.title.text = '';
+        navChartOptions.options.plugins.legend.display = false;
+        navChartOptions.options.plugins.tooltip.enabled = false;
+        navChartOptions.plugins = [navigatorPlugin];
+
+        let myNavigator = new Chart(navChartCanvas.getContext('2d'), navChartOptions);
+        myNavigator.parentChart = myChart;
+    }
 }

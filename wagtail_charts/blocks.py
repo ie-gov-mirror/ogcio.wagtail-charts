@@ -133,6 +133,7 @@ class ChartSettingsBlock(StructBlock):
     column_as_dataset = BooleanBlock(default=False, required=False, label="Column as Dataset", group="General")
     x_label = CharBlock(required=False, label="X axis label", group="General")
     x_tick_label_step = CharBlock(required=False, label="X tick label step", group="General")
+    chart_navigator = BooleanBlock(default=False, required=False, label="Enable Chart Navigator", group="General")
     chart_title = CharBlock(required=False, label="Chart title", group="General")
 
     # Left Axis settings
@@ -236,6 +237,7 @@ class ChartBlockAdapter(StructBlockAdapter):
         meta["multi_chart_types"] = block.meta.multi_chart_types
         meta["callbacks"] = block.meta.callbacks
         result[2] = meta
+
         return result
 
     @cached_property
