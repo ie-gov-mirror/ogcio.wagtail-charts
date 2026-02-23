@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.utils.functional import cached_property
+from wagtail import hooks
 from wagtail.admin.telepath import register
 from wagtail.blocks import (
     BooleanBlock,
@@ -27,8 +28,8 @@ CHART_TYPES = (
     ("radar", "Radar Chart"),
     ("polar", "Polar Chart"),
     ("waterfall", "Waterfall Chart"),
-    # not fully implemented yet
     ("scatter", "Scatter Chart"),
+    # not fully implemented yet
     # ("bubble", "Bubble Chart"),
 )
 
@@ -46,6 +47,11 @@ CHART_COLOR_CHOICES = (
     ("#8e50bd", "Purple"),
     ("#4a4a4a", "Grey"),
 )
+
+
+@hooks.register("register_icons")  # type: ignore
+def register_admin_icon(icons):
+    return icons + ["wagtailcharts/icons/chart-line-solid-full.svg"]
 
 
 class SettingsStructValue(StructValue):
@@ -218,8 +224,8 @@ class ChartBlock(StructBlock):
     settings = ChartSettingsBlock()
 
     class Meta:  # type: ignore
-        icon = "fa-chart"
-        label = "Chart Block"
+        icon = "chart-line-solid-full"
+        label = "Chart"
         template = "wagtailcharts/blocks/chart_block.html"
         colors = CHART_COLOR_CHOICES
         multi_chart_types = MULTI_CHART_TYPES
