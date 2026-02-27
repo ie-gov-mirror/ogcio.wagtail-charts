@@ -254,16 +254,15 @@ class ChartBlockAdapter(StructBlockAdapter):
             + [
                 "wagtailcharts/js/chart-types.js",
                 "wagtailcharts/js/chart-dataset.js",
-                "wagtailcharts/js/jspreadsheet.js",
-                "wagtailcharts/js/jsuites.js",
+                "wagtailcharts/js/jspreadsheet.min.js",
+                "wagtailcharts/js/jsuites.min.js",
             ],
             css={
                 **structblock_media._css,  # type: ignore
                 **{
                     "all": (
-                        "wagtailcharts/css/jspreadsheet.css",
-                        "wagtailcharts/css/jspreadsheet.theme.css",
-                        "wagtailcharts/css/jsuites.css",
+                        "wagtailcharts/css/jspreadsheet.min.css",
+                        "wagtailcharts/css/jsuites.min.css",
                         "wagtailcharts/css/wagtailcharts.css",
                     )
                 },
