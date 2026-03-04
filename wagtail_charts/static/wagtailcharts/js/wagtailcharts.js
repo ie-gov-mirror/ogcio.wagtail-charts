@@ -438,7 +438,7 @@ for (i = 0; i < charts.length; ++i) {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        let label = context.label || '';
+                        let label = context.dataset.label || '';
 
                         if (label) {
                             label += ': ';
@@ -461,6 +461,7 @@ for (i = 0; i < charts.length; ++i) {
                                 chart_settings['unit_override']
                             )
                         }
+
                         return label;
                     }
                 }
@@ -526,7 +527,7 @@ for (i = 0; i < charts.length; ++i) {
             return percentageFormatter(value, chart_settings['y_left_precision'], chart_settings['unit_override'])
         };
         options.plugins.tooltip.callbacks.label = function(context) {
-            let label = context.label || '';
+            let label = context.dataset.label || '';
 
             if (label) {
                 label += ': ';
@@ -550,7 +551,7 @@ for (i = 0; i < charts.length; ++i) {
             return unit + Math.abs(value).toLocaleString();
         };
         options.plugins.tooltip.callbacks.label = function(context) {
-            let label = context.label || '';
+            let label = context.dataset.label || '';
             let unit = chart_settings['unit_override'] || '';
 
             if (label) {
@@ -585,7 +586,7 @@ for (i = 0; i < charts.length; ++i) {
         }
 
         if (chart_settings['y_right_data_type'] === "percentage") {
-            options.scales.y1.ticks.callback=function(value) {
+            options.scales.y1.ticks.callback = function(value) {
                 return percentageFormatter(value, chart_settings['y_right_precision'])
             };
 
@@ -685,8 +686,10 @@ for (i = 0; i < charts.length; ++i) {
         chartOptions.options = mergeDeep(chartOptions.options, fn())
     }
 
+    // main chart
     let myChart = new Chart(charts[i].getContext('2d'), chartOptions);
 
+    // navigation bar if enabled
     const navChartCanvas = document.getElementById('nav-' + charts[i].id)
 
     if (navChartCanvas) {
