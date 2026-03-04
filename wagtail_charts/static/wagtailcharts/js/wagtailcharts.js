@@ -537,9 +537,14 @@ for (i = 0; i < charts.length; ++i) {
             }
             data = context.dataset.data[context.dataIndex]
             if (Array.isArray(data) && data.length == 2) {
-                label += percentageFormatter((parseFloat(data[1])*1000-parseFloat(data[0])*1000)/1000, chart_settings['precision'], chart_settings['unit_override'])
+                label += percentageFormatter(
+                    (parseFloat(data[1]) * 1000 - parseFloat(data[0]) * 1000) / 1000,
+                    chart_settings['precision'], chart_settings['unit_override'])
             } else {
-                label += percentageFormatter(context.dataset.data[context.dataIndex], chart_settings['precision'], chart_settings['unit_override'])
+                label += percentageFormatter(
+                    context.dataset.data[context.dataIndex],
+                    chart_settings['precision'],
+                    chart_settings['unit_override'])
             }
             return label;
         }
@@ -564,9 +569,10 @@ for (i = 0; i < charts.length; ++i) {
         }
     }
 
-
     if (chart_settings['y_left_show'] === false){
-        options.scales.y.grid.lineWidth = function(context){ return context.tick && context.tick.value == 0 ? 1 : 0 }
+        options.scales.y.grid.lineWidth = function(context) {
+            return context.tick && context.tick.value == 0 ? 1 : 0
+        }
         options.scales.y.grid.drawBorder = false;
         options.scales.y.ticks.display = false;
     }
@@ -610,7 +616,9 @@ for (i = 0; i < charts.length; ++i) {
         }
 
         if (chart_settings['y_right_show'] === false){
-            options.scales.y1.grid.lineWidth = function(context){ return context.tick && context.tick.value == 0 ? 1 : 0 }
+            options.scales.y1.grid.lineWidth = function(context) {
+                return context.tick && context.tick.value == 0 ? 1 : 0
+            }
             options.scales.y1.grid.drawBorder = false;
             options.scales.y1.ticks.display = false;
         }
@@ -633,8 +641,12 @@ for (i = 0; i < charts.length; ++i) {
 
     if (chart_settings['show_grid'] === false){
         options.scales.x.grid.display = false;
-        options.scales.y.grid.lineWidth = function(context){ return context.tick && context.tick.value == 0 ? 1 : 0 }
-        options.scales.y1.grid.lineWidth = function(context){ return context.tick && context.tick.value == 0 ? 1 : 0 }
+        options.scales.y.grid.lineWidth = function(context) {
+            return context.tick && context.tick.value == 0 ? 1 : 0
+        }
+        options.scales.y1.grid.lineWidth = function(context) {
+            return context.tick && context.tick.value == 0 ? 1 : 0
+        }
     }
 
     if (chartType == 'pie' || chartType == 'doughnut'){
