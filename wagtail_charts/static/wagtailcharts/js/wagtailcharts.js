@@ -515,6 +515,9 @@ for (i = 0; i < charts.length; ++i) {
     if (chart_settings['y_left_max'] !== '') {
         options.scales.y.max = parseFloat(chart_settings['y_left_max'])
     }
+    if (chart_settings['y_left_log_scale']) {
+        options.scales.y.type = 'logarithmic'
+    }
     if (chart_settings['y_left_step_size'] !== '') {
         options.scales.y.ticks.stepSize = parseFloat(chart_settings['y_left_step_size'])
     }
@@ -576,6 +579,9 @@ for (i = 0; i < charts.length; ++i) {
         }
         if (chart_settings['y_right_max'] !== '') {
             options.scales.y1.max = parseFloat(chart_settings['y_right_max'])
+        }
+        if (chart_settings['y_right_log_scale']) {
+            options.scales.y1.type = 'logarithmic'
         }
         if (chart_settings['y_right_step_size'] !== '') {
             options.scales.y1.ticks.stepSize = parseFloat(chart_settings['y_right_step_size']);
