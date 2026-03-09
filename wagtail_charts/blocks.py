@@ -264,6 +264,7 @@ class ChartBlockAdapter(StructBlockAdapter):
                 **{
                     "all": (
                         "wagtailcharts/css/jspreadsheet.min.css",
+                        "wagtailcharts/css/jspreadsheet.themes.css",
                         "wagtailcharts/css/jsuites.min.css",
                         "wagtailcharts/css/wagtailcharts.css",
                     )
