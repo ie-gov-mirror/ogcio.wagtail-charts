@@ -200,17 +200,9 @@ class ChartSettingsBlock(StructBlock):
 
 class ChartBlock(StructBlock):
 
-    def __init__(self, chart_types=CHART_TYPES, **kwargs):
+    def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-
-        self.chart_types = chart_types
-        chart_type_block = ChoiceBlock(
-            choices=chart_types, label="Chart Type", required=True, default=chart_types[0][0]
-        )
-        chart_type_block.set_name("chart_type")
-        self.child_blocks["chart_type"] = chart_type_block
-        self.child_blocks.move_to_end("chart_type", last=False)
 
         # Not yet tested, keeping it in case we need custom callbacks in the future or Wagtail inject it in some cases
         if "callbacks" in kwargs:
@@ -221,6 +213,7 @@ class ChartBlock(StructBlock):
             self.child_blocks["callbacks"] = callbacks_block
 
     title = CharBlock(required=False)
+    chart_type = ChoiceBlock(choices=CHART_TYPES, label="Chart Type", required=True, default=CHART_TYPES[0][0])
     datasets = TextBlock(default='{"data":[], "options":{}}')
 
     settings = ChartSettingsBlock()
