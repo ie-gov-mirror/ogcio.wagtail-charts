@@ -2,7 +2,7 @@ Chart.defaults.set('plugins.datalabels', {
     color: '#000000',
 });
 
-var formatValue = function (val, precision = 1, override) {
+const formatValue = function (val, precision = 1, override) {
 
     let raw_value;
 
@@ -29,8 +29,10 @@ var formatValue = function (val, precision = 1, override) {
     }
 }
 
-var percentageFormatter = function (val, precision = 1, override) {
-    number = formatValue(val, precision)
+const percentageFormatter = function (val, precision = 1, override) {
+
+    number = formatValue(val, precision);
+
     if (override !== undefined && override !== "" && override !== null) {
         return number + " " + override;
     } else {
@@ -38,11 +40,18 @@ var percentageFormatter = function (val, precision = 1, override) {
     }
 }
 
-var isObject = function (item) {
+const absoluteNumberFormatter = function (val, precision = 1, override) {
+
+    let unit = override || '';
+
+    return unit + formatValue(Math.abs(val), precision);
+}
+
+const isObject = function (item) {
     return (item && typeof item === 'object' && !Array.isArray(item));
   }
 
-var mergeDeep = function (target, ...sources) {
+const mergeDeep = function (target, ...sources) {
     if (!sources.length) return target;
     const source = sources.shift();
 
@@ -58,6 +67,52 @@ var mergeDeep = function (target, ...sources) {
     }
 
     return mergeDeep(target, ...sources);
+}
+
+const labelFormatter = function(dataset, dataIndex, chart_settings) {
+
+    let label = dataset.label || '';
+
+    if (label) {
+        label += ': ';
+    }
+
+    data = dataset.data[dataIndex]
+
+    let labelFormatValue;
+    if (dataset.yAxisID == 'y1') {
+        if (chart_settings['y_right_data_type'] === 'percentage') {
+            labelFormatValue = percentageFormatter;
+        } else if (chart_settings['y_right_data_type'] === 'absolute_number') {
+            labelFormatValue = absoluteNumberFormatter;
+        }
+    } else {
+        if (chart_settings['y_left_data_type'] === 'percentage') {
+            labelFormatValue = percentageFormatter;
+        } else if (chart_settings['y_left_data_type'] === 'absolute_number') {
+            labelFormatValue = absoluteNumberFormatter;
+        }
+    }
+
+    if (!labelFormatValue) {
+        labelFormatValue = formatValue;
+    }
+
+    if (Array.isArray(data) && data.length == 2) {
+        label += labelFormatValue(
+            (parseFloat(data[1]) * 1000 - parseFloat(data[0]) * 1000) / 1000,
+            chart_settings['precision'],
+            chart_settings['unit_override']
+        )
+    } else {
+        label += labelFormatValue(
+            data,
+            chart_settings['precision'],
+            chart_settings['unit_override']
+        )
+    }
+
+    return label;
 }
 
 
@@ -306,7 +361,7 @@ const navigatorPlugin = {
     }
 }
 
-var charts = document.querySelectorAll('*[id^="chart-"]');
+const charts = document.querySelectorAll('*[id^="chart-"]');
 for (i = 0; i < charts.length; ++i) {
     const chart_data = JSON.parse(charts[i].dataset.datasets).data;
     const chart_options =  JSON.parse(charts[i].dataset.datasets).options;
@@ -438,31 +493,7 @@ for (i = 0; i < charts.length; ++i) {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        let label = context.dataset.label || '';
-
-                        if (label) {
-                            label += ': ';
-                        }
-
-                        data = context.dataset.data[context.dataIndex]
-
-                        if (Array.isArray(data) && data.length == 2) {
-                            label += formatValue(
-                                (
-                                    parseFloat(data[1]) * 1000 - parseFloat(data[0]) * 1000) / 1000,
-                                    chart_settings['precision'],
-                                    chart_settings['unit_override']
-                                )
-                        } else {
-                            label += formatValue(
-                                context.dataset.data[context.dataIndex],
-                                chart_settings['precision'],
-                                chart_settings['unit_override'],
-                                chart_settings['unit_override']
-                            )
-                        }
-
-                        return label;
+                        return labelFormatter(context.dataset, context.dataIndex, chart_settings);
                     }
                 }
             },
@@ -470,11 +501,10 @@ for (i = 0; i < charts.length; ++i) {
                 formatter: function(value) {
                     if (Array.isArray(value) && value.length == 2) {
                         return formatValue(
-                            (
-                                parseFloat(value[1]) * 1000 - parseFloat(value[0]) * 1000) / 1000,
-                                chart_settings['precision'],
-                                chart_settings['unit_override']
-                            )
+                            (parseFloat(value[1]) * 1000 - parseFloat(value[0]) * 1000) / 1000,
+                            chart_settings['precision'],
+                            chart_settings['unit_override']
+                        )
                     } else {
                         return formatValue(value, chart_settings['precision'], chart_settings['unit_override'])
                     }
@@ -529,25 +559,7 @@ for (i = 0; i < charts.length; ++i) {
         options.scales.y.ticks.callback = function(value) {
             return percentageFormatter(value, chart_settings['y_left_precision'], chart_settings['unit_override'])
         };
-        options.plugins.tooltip.callbacks.label = function(context) {
-            let label = context.dataset.label || '';
 
-            if (label) {
-                label += ': ';
-            }
-            data = context.dataset.data[context.dataIndex]
-            if (Array.isArray(data) && data.length == 2) {
-                label += percentageFormatter(
-                    (parseFloat(data[1]) * 1000 - parseFloat(data[0]) * 1000) / 1000,
-                    chart_settings['precision'], chart_settings['unit_override'])
-            } else {
-                label += percentageFormatter(
-                    context.dataset.data[context.dataIndex],
-                    chart_settings['precision'],
-                    chart_settings['unit_override'])
-            }
-            return label;
-        }
         if (chart_settings['show_values_on_chart']) {
             options.plugins.datalabels.formatter = function(value) {
                 return percentageFormatter(value, chart_settings['precision'], chart_settings['unit_override'])
@@ -558,15 +570,6 @@ for (i = 0; i < charts.length; ++i) {
             let unit = chart_settings['unit_override'] || '';
             return unit + Math.abs(value).toLocaleString();
         };
-        options.plugins.tooltip.callbacks.label = function(context) {
-            let label = context.dataset.label || '';
-            let unit = chart_settings['unit_override'] || '';
-
-            if (label) {
-                label += ': ';
-            }
-            return label += unit + Math.abs(context.dataset.data[context.dataIndex]).toLocaleString();
-        }
     }
 
     if (chart_settings['y_left_show'] === false){
@@ -601,18 +604,6 @@ for (i = 0; i < charts.length; ++i) {
             options.scales.y1.ticks.callback = function(value) {
                 return percentageFormatter(value, chart_settings['y_right_precision'])
             };
-
-            options.plugins.tooltip.callbacks.label=function(context) {
-                let label = context.dataset.label || '';
-
-                if (label) {
-                    label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                    label += percentageFormatter(context.parsed.y, chart_settings['precision']);
-                }
-                return label;
-            }
         }
 
         if (chart_settings['y_right_show'] === false){
