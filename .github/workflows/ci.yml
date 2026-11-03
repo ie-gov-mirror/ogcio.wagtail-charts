@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: "Python ${{ matrix.python }} · Wagtail ${{ matrix.wagtail }} · Django ${{ matrix.django }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Oldest supported: wagtail.admin.telepath first appeared in Wagtail 7.1
+          - { python: "3.10", wagtail: "7.1", django: "5.2" }
+          - { python: "3.12", wagtail: "7.4", django: "5.2" }
+          # Matches gov.ie (ogcio/govie-wagtail)
+          - { python: "3.12", wagtail: "8.0", django: "5.2" }
+          - { python: "3.13", wagtail: "8.0", django: "6.0" }
+          - { python: "3.14", wagtail: "8.0", django: "6.0" }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install "wagtail~=${{ matrix.wagtail }}.0" "django~=${{ matrix.django }}.0" -e ".[test]"
+
+      - name: Test
+        run: pytest -v
+
+  package:
+    name: Build and check package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          twine check --strict dist/*
+
+      - name: Check templates and static files are in the wheel
+        run: |
+          python - <<'PY'
+          import glob, zipfile
+          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
+          for required in (
+              "wagtail_charts/wagtail_hooks.py",
+              "wagtail_charts/templates/wagtailcharts/blocks/chart_block.html",
+              "wagtail_charts/templates/wagtailcharts/icons/chart-line-solid-full.svg",
+              "wagtail_charts/static/wagtailcharts/js/chart.umd.min.js",
+              "wagtail_charts/static/wagtailcharts/css/wagtailcharts.css",
+          ):
+              assert required in names, f"missing from wheel: {required}"
+          print(f"wheel OK ({len(names)} files)")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/

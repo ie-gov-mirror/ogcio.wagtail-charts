@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ogcio-wagtail-charts"
+version = "0.1.0"
+description = "Chart.js-powered chart StreamField block for Wagtail, with a spreadsheet editor for chart data."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Office of the Government Chief Information Officer (OGCIO)" }]
+requires-python = ">=3.10"
+dependencies = [
+    "wagtail>=7.1",
+    "wagtail-color-panel>=1.5",
+]
+keywords = ["wagtail", "django", "charts", "chart.js", "streamfield"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
+    "Framework :: Wagtail",
+    "Framework :: Wagtail :: 7",
+    "Framework :: Wagtail :: 8",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8",
+    "pytest-django>=4.8",
+]
+
+[project.urls]
+Repository = "https://github.com/ogcio/wagtail-charts"
+Changelog = "https://github.com/ogcio/wagtail-charts/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["wagtail_charts*"]
+
+[tool.setuptools.package-data]
+wagtail_charts = ["static/**/*", "templates/**/*"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+testpaths = ["tests"]

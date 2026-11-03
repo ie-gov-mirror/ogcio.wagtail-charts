@@ -1,0 +1,66 @@
+name: Publish
+
+# Publishing a GitHub release uploads to PyPI.
+# Running the workflow manually uploads to TestPyPI, for trial runs.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  check-version:
+    name: Check release tag matches package version
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare tag and pyproject.toml version
+        run: |
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package version $version"
+            exit 1
+          fi
+
+  testpypi:
+    name: Upload to TestPyPI
+    if: github.event_name == 'workflow_dispatch'
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/ogcio-wagtail-charts
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    name: Upload to PyPI
+    if: github.event_name == 'release'
+    needs: [ci, check-version]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ogcio-wagtail-charts
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

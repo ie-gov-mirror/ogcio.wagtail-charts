@@ -1,0 +1,5 @@
+include LICENSE README.md CHANGELOG.md
+recursive-include wagtail_charts/static *
+recursive-include wagtail_charts/templates *
+recursive-include tests *.py
+global-exclude __pycache__ *.py[cod]
